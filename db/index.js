@@ -1,12 +1,25 @@
+const mysql = require('mysql2');
 
-db.query(`DELETE FROM course_names WHERE id = ?`, 3, (err, result) => {
-    if (err) {
-      console.log(err);
-    }
-    console.log(result);
-  });
-  
-  // Query database
-  db.query('SELECT * FROM course_names', function (err, results) {
-    console.log(results);
-  });
+// Connect to database
+const db = mysql.createConnection(
+  {
+    host: 'localhost',
+    user: 'root',
+    password: 'root',
+    database: 'employee_db'
+  },
+  console.log(`Connected to the employee_db database.`)
+);
+
+class datadb {
+
+  viewAllDepartments() {
+    return db.promise().query(
+      'SELECT * FROM employee'
+    )
+  }
+
+}
+
+module.exports=datadb;
+
