@@ -3,7 +3,7 @@ const inquirer = require("inquirer");
 
 const { allowedNodeEnvironmentFlags } = require("process");
 
-
+//connect to data bas
 const connectionInfo =
 {
     host: 'localhost',
@@ -21,10 +21,11 @@ db.connect((err) => {
         throw err;
     }
     console.log("Your database is now connected");
-    runPrompt();
+    mainmenu();
 });
 
-function runPrompt() {
+//first promt
+function mainmenu() {
     inquirer
         .prompt([
             {
@@ -34,31 +35,31 @@ function runPrompt() {
                 choices: [
                     {
                         name: "View All Departments",
-                        value: "View_All_Departments"
+                        value: "1"
                     },
                     {
                         name: "View All Roles",
-                        value: "View_All_Roles"
+                        value: "2"
                     },
                     {
                         name: "View All Employees",
-                        value: "View_All_Employees"
+                        value: "3"
                     },
                     {
                         name: "Add a Department",
-                        value: "Add_Department"
+                        value: "4"
                     },
                     {
                         name: "Add a Role",
-                        value: "Add_Role"
+                        value: "5"
                     },
                     {
                         name: "Add a Employee",
-                        value: "Add_Employee"
+                        value: "6"
                     },
                     {
                         name: "Update an Employee Role",
-                        value: "Update_Employee_Role"
+                        value: "7"
                     },
                     {
                         name: "Exit",
@@ -71,58 +72,59 @@ function runPrompt() {
             let choice = res.choice
             switch (choice) {
 
-                case "View_All_Departments":
+                case "1":
                     viewAllDepartments();
                     break;
 
-                case "View_All_Roles":
+                case "2":
                     viewAllRoles();
                     break;
 
-                case "View_All_Employees":
+                case "3":
                     viewAllEmployees();
                     break;
 
-                case "Add_Department":
+                case "4":
                     addDepartment();
                     break;
 
-                case "Add_Role":
+                case "5":
                     addRole();
                     break;
 
-                case "Add_Employee":
+                case "6":
                     addEmployee();
                     break;
 
-                case "Update_Employee_Role":
+                case "7":
                     updateEmployeeRole();
                     break;
 
                 case "Close":
-                    console.log("Goodbye.")
+                    console.log("bye")
                     process.exit()
             }
         })
 }
 
 
-
+//view the departments
 function viewAllDepartments() {
     db.query("SELECT * FROM department", function (err, results) {
         console.table(results)
-        runPrompt()
+        mainmenu()
     })
 }
 
+//view the roles
 function viewAllRoles() {
     db.query(`SELECT role.id, title, salary, department_name FROM role JOIN department ON role.department_id = department.id`,
         function (err, results) {
             console.table(results)
-            runPrompt()
+            mainmenu()
         });
 }
-
+//view the employees
 function viewAllEmployees() {
     db.query(`SELECT emp.id, emp.first_name, emp.last_name, title, salary, department_name, 
     CONCAT(emp2.first_name, ' ', emp2.last_name) AS "manager_name" FROM employee AS emp
@@ -131,7 +133,8 @@ function viewAllEmployees() {
     LEFT JOIN employee AS emp2 ON emp.manager_id = emp2.id;`,
         function (err, results) {
             console.table(results);
-            runPrompt()
+            //back to menu
+            mainmenu()
         });
 }
 
@@ -148,7 +151,8 @@ function addDepartment() {
             db.query(`INSERT INTO department(department_name) VALUES (?)`, value, function (err) {
                 if (err) console.log(err);
                 console.log("New Department has been added.")
-                runPrompt()
+                 //back to menu
+                mainmenu()
             });
         })
 }
@@ -177,19 +181,20 @@ function addRole() {
                     choices: deptArray
                 }
             ])
-            .then(res => {
+          .then(res => {
                 const { title, salary, department } = res
 
-                db.query(`SELECT id FROM department WHERE department_name = ?`, department, function (err, res) {
-                    if (err) console.log(err);
-                    let departmentId = res[0].id;
-                    db.query(`INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`, [title, salary, departmentId], function (err) {
+      db.query(`SELECT id FROM department WHERE department_name = ?`, department, function (err, res) {
+           if (err) console.log(err);
+             let departmentId = res[0].id;
+               db.query(`INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`, [title, salary, departmentId], function (err) {
                         if (err) console.log(err);
                         console.log("Role has been added.")
-                        runPrompt()
+                         //back to menu
+                        mainmenu()
                     });
                 });
-            })
+          })
     })
 }
 
@@ -197,15 +202,13 @@ function addEmployee() {
     db.query('SELECT title FROM role', function (err, results) {
         let roles = []
 
-        for (let i of results) roles.push(i.title)
+     for (let i of results) roles.push(i.title)
 
         db.query("SELECT CONCAT(first_name, ' ', last_name) AS 'manager_name' FROM employee", function (err, results) {
             let employees = []
-
             for (let i of results) {
                 employees.push(i.manager_name)
             }
-
             inquirer
                 .prompt([
                     {
@@ -237,31 +240,33 @@ function addEmployee() {
                     db.query(`SELECT id FROM role WHERE title = ?`, role, function (err, res) {
                         if (err) console.log(err);
                         let roleId = res[0].id
-
+                        // for empty imputs
                         if (manager === "none") {
-                            var managerId = null
+                            var managerid = null
 
-                            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`, [first, last, roleId, managerId], function (err) {
+                            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`, [first, last, roleId, managerid], function (err) {
                                 if (err) console.log(err);
                                 console.log("Employee has been added.")
-                                runPrompt()
+                                 //back to menu
+                                mainmenu()
                             })
                         } else {
+                            //split
                             let split = manager.split(" ")
 
                             db.query(`SELECT id FROM employee WHERE first_name = ? AND last_name = ?`, [split[0], split[1]], function (err, res) {
                                 if (err) console.log(err);
 
-                                let managerId = res[0].id
+                                let managerid = res[0].id
 
                                 db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
-                            VALUES (?,?,?,?)`, [first, last, roleId, managerId], function (err) {
+                            VALUES (?,?,?,?)`, [first, last, roleId, managerid], function (err) {
                                     if (err) {
                                         console.log(err);
                                     }
 
                                     console.log("Employee has been added.")
-                                    runPrompt()
+                                    mainmenu()
                                 })
                             })
                         }
@@ -270,6 +275,9 @@ function addEmployee() {
         })
     })
 }
+/*--------------------   --------------------------------*/
+
+/*  -------*  update *-------------*/
 
 function updateEmployeeRole() {
     db.query(`SELECT CONCAT(first_name, ' ', last_name) AS "employees" FROM employee`, function (err, results) {
@@ -315,7 +323,7 @@ function updateEmployeeRole() {
 
                                         db.query(`UPDATE employee SET role_id = ? WHERE employee.id = ?`, [roleId, employeeId], function (err, results) {
                                             console.log("Employee role has been updated.")
-                                            runPrompt()
+                                            mainmenu()
                                         })
                                     })
                                 })
@@ -325,6 +333,8 @@ function updateEmployeeRole() {
     })
 }
 
-runPrompt()
+/*----starts from here - */
+//first menu 
+mainmenu()
 
-// module.exports = prompt
+//end
